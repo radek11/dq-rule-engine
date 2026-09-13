@@ -25,6 +25,11 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
+tasks.javadoc {
+    // Check syntax and references, but do not demand a comment on every enum constant.
+    (options as StandardJavadocDocletOptions).addStringOption("Xdoclint:all,-missing", "-quiet")
+}
+
 tasks.test {
     useJUnitPlatform()
 }
