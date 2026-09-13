@@ -7,7 +7,8 @@ import java.util.Objects;
  *
  * @param name field name
  * @param presence whether the field was present, {@code null} or missing
- * @param value the text read, or {@code null} unless {@code presence} is {@link Presence#PRESENT}
+ * @param value the text read; non-{@code null} exactly when {@code presence} is
+ *     {@link Presence#PRESENT}, so {@code presence} alone tells the cases apart
  */
 public record FieldRead(String name, Presence presence, String value) {
 
@@ -21,5 +22,9 @@ public record FieldRead(String name, Presence presence, String value) {
     public FieldRead {
         Objects.requireNonNull(name, "name");
         Objects.requireNonNull(presence, "presence");
+        if ((presence == Presence.PRESENT) != (value != null)) {
+            throw new IllegalArgumentException(
+                    "value must be set exactly when presence is PRESENT; presence was " + presence);
+        }
     }
 }

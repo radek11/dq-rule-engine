@@ -29,16 +29,17 @@ final class RecordingFieldReader implements FieldReader {
 
     @Override
     public Optional<String> text(String name) {
-        return Optional.ofNullable(read(name));
+        FieldRead read = read(name);
+        return read.presence() == PRESENT ? Optional.of(read.value()) : Optional.empty();
     }
 
     @Override
     public String requiredText(String name) {
-        String value = read(name);
-        if (value == null) {
+        FieldRead read = read(name);
+        if (read.presence() != PRESENT) {
             throw new MissingFieldException(name);
         }
-        return value;
+        return read.value();
     }
 
     /** @return the reads so far, in order; a snapshot, later reads do not change it */
@@ -47,27 +48,31 @@ final class RecordingFieldReader implements FieldReader {
     }
 
     /**
-     * Reads a field and records the read. Missing and {@code null} look the same to the rule
-     * but not in provenance: a missing field was never sent, a {@code null} one was sent empty.
+     * Reads a field and records the read. The returned read is exactly what goes into
+     * provenance, so the rule's view and the recorded view cannot diverge. Missing and
+     * {@code null} look the same to the rule but not in provenance: a missing field was never
+     * sent, a {@code null} one was sent empty.
      *
-     * @return the text, or {@code null} when the field is missing or holds {@code null}
      * @throws FieldTypeException when the field holds a non-text value; not recorded, because
      *     the read fails the rule and a failure carries no provenance
      */
-    private String read(String name) {
+    private FieldRead read(String name) {
+        FieldRead read = inspect(name);
+        reads.add(read);
+        return read;
+    }
+
+    private FieldRead inspect(String name) {
         if (!record.contains(name)) {
-            reads.add(new FieldRead(name, MISSING, null));
-            return null;
+            return new FieldRead(name, MISSING, null);
         }
         Object value = record.get(name);
         if (value == null) {
-            reads.add(new FieldRead(name, NULL, null));
-            return null;
+            return new FieldRead(name, NULL, null);
         }
-        if (!(value instanceof String text)) {
-            throw new FieldTypeException(name, value.getClass());
+        if (value instanceof String text) {
+            return new FieldRead(name, PRESENT, text);
         }
-        reads.add(new FieldRead(name, PRESENT, text));
-        return text;
+        throw new FieldTypeException(name, value.getClass());
     }
 }
