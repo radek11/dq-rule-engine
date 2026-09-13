@@ -1,9 +1,5 @@
 package io.github.radek11.dq.result;
 
-import io.github.radek11.dq.data.FieldRead;
-import io.github.radek11.dq.rule.Decision;
-import io.github.radek11.dq.rule.Severity;
-
 import java.util.List;
 import java.util.Objects;
 

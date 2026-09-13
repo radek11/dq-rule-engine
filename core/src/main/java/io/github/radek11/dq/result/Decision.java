@@ -1,8 +1,8 @@
-package io.github.radek11.dq.rule;
+package io.github.radek11.dq.result;
 
 /**
  * The outcome of a rule for one record, derived from the rule's computed value through its
- * {@link DecisionMapping}.
+ * {@link io.github.radek11.dq.rule.DecisionMapping DecisionMapping}.
  */
 public enum Decision {
     VALID,

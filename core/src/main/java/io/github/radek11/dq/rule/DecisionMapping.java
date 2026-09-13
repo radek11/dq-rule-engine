@@ -1,5 +1,7 @@
 package io.github.radek11.dq.rule;
 
+import io.github.radek11.dq.result.Decision;
+
 import java.util.Map;
 import java.util.Objects;
 
@@ -8,7 +10,7 @@ import java.util.Objects;
  * rules never choose a decision themselves.
  *
  * <p>A fallback is mandatory, so every possible value has a decision and an unexpected value
- * never fails the run.
+ * never fails the run. Immutable.
  */
 public final class DecisionMapping {
 
@@ -32,22 +34,17 @@ public final class DecisionMapping {
     }
 
     /**
-     * Maps a computed value to a decision.
+     * Maps a computed value to a decision. Used by {@link Rule#evaluate} only.
      *
      * @param value the value computed by the rule's logic, never {@code null}
      * @return the mapped decision, or the fallback for an unmapped value
      */
-    public Decision decide(String value) {
+    Decision decide(String value) {
         throw new UnsupportedOperationException("E2");
     }
 
-    /** @return the decision for each known value */
-    public Map<String, Decision> cases() {
-        return cases;
-    }
-
-    /** @return the decision for any unmapped value */
-    public Decision fallback() {
-        return fallback;
+    @Override
+    public String toString() {
+        return "DecisionMapping" + cases + " default " + fallback;
     }
 }

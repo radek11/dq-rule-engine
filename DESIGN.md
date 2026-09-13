@@ -9,20 +9,42 @@ RuleEngine engine = new RuleEngine(RuleCatalog.of(rules));
 RunSummary summary = engine.run(records, RunOptions.defaults().withBatchSize(500), sink);
 ```
 
-| Type | Role |
-|---|---|
-| `RuleEngine` | Runs a catalog over records. Holds no run state, safe to share between threads. |
-| `DataRecord` | A record accessed by field name. The host adapts its input (JSON, database row) to it. |
-| `Rule` | Id, label, status, severity, scope, categories, `RuleLogic`, `DecisionMapping`. Immutable. |
-| `RuleLogic` | `FieldReader → String` value. Computes a token such as `"ok"`; never a decision. |
-| `DecisionMapping` | Value → `Decision`, as data, with a mandatory fallback. |
-| `FieldReader` | The only way logic reads a record. Every read is recorded as provenance. |
-| `ResultSink` | Receives each `Result` and `Failure` as it is produced, plus batch boundaries. |
-| `RunSummary` | Counts of results and failures, results by decision and by severity. |
-| `RunOptions` | Batch size, rule filter (`Predicate<Rule>`), id and country field names. |
-| `RuleCatalog` | Source of rules; read once per run. |
+Packages, dependencies pointing one way (`data` and `result` depend on nothing):
+
+| Package | Public types | Hidden (package-private) |
+|---|---|---|
+| `dq` | `RuleEngine` — coordinates a run; `RunOptions` | `RuleSelection` — rules of a run; `RunCounters` — summary counts |
+| `dq.rule` | `Rule` — evaluates itself on a record; `RuleLogic`, `DecisionMapping`, `Scope`, `RuleStatus`, `RuleCatalog`, `RuleFilters` | `RecordingFieldReader` — records reads as provenance |
+| `dq.data` | `DataRecord` — record by field name; `FieldReader` — what logic reads through; field exceptions | — |
+| `dq.result` | `Result`, `Failure`, `RunSummary`, `ResultSink`, `Decision`, `Severity`, `FieldRead` | — |
+
+Who does what in a run:
+
+```
+RuleEngine.run
+  RuleSelection.of(catalog, filter)      snapshot, duplicate ids, filter, RELEASED only
+  per batch, per record:                 id and country, or a RECORD failure
+    per selected rule:
+      rule.appliesTo(country)            scope decides
+      rule.evaluate(record, id)          logic via recording reader → value → mapping → Result
+      failure → Failure(RULE)            isolation stays in the engine
+      sink.onResult / onFailure          outside the try: a failing sink ends the run
+      RunCounters.add
+    sink.onBatchEnd
+  RunCounters.toSummary()
+```
 
 Decisions, each with the alternative it beat:
+
+- **Behaviour lives in the objects that own the data.** `Rule` is a class whose logic and
+  mapping are private; `rule.evaluate(record, id)` is the only way to run it, so the mapping
+  and the "null value is a fault" contract cannot be bypassed. Start-of-run invariants live in
+  `RuleSelection`, counting in `RunCounters`; the engine only coordinates and isolates.
+  *Rejected:* `Rule` as a record read by the engine (`rule.logic()`, `rule.mapping()`) — every
+  invariant would sit in one long method, testable only through a full run.
+- **Values crossing the boundary are records.** `Result`, `Failure`, `RunSummary`, `FieldRead`,
+  `RunOptions` are data the host reads, serializes and asserts on. *Rejected:* hiding them
+  behind interfaces — no behaviour to protect, only more code for the host.
 
 - **Push, not pull.** `run(records, options, sink)` returns a summary and emits everything
   else to the sink. *Rejected:* `Stream<Outcome>` — the summary is only complete after a
@@ -67,7 +89,15 @@ Decisions, each with the alternative it beat:
 
 ## 4. Trade-offs and what I would do next
 
-*To be written (E6).*
+*To be written (E6).* Notes collected so far:
+
+- **Parallelism within a run.** A run is sequential on the caller's thread; separate runs can
+  share one engine. Not parallel yet: no throughput target, rules are cheap string checks and
+  the sink (I/O) is the likely bottleneck. The design keeps the change local: `Rule.evaluate`
+  shares no state, and the batch is a natural unit of work. Plan: an optional host-supplied
+  `Executor` in `RunOptions`; evaluate a batch in parallel, then emit its outcomes to the sink
+  in input order on the caller's thread. The sink stays single-threaded and ordered; memory
+  grows to batch size × rules. Only `RuleEngine.run` and counter merging change.
 
 ## Assumptions
 
