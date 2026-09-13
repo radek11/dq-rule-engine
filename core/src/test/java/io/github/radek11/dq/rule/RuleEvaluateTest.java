@@ -1,6 +1,7 @@
 package io.github.radek11.dq.rule;
 
 import io.github.radek11.dq.data.DataRecord;
+import io.github.radek11.dq.data.MissingFieldException;
 import io.github.radek11.dq.result.Decision;
 import io.github.radek11.dq.result.FieldRead;
 import io.github.radek11.dq.result.Result;
@@ -28,6 +29,7 @@ import static io.github.radek11.dq.result.FieldRead.Presence.MISSING;
 import static io.github.radek11.dq.result.FieldRead.Presence.PRESENT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
+import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Named.named;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
@@ -92,21 +94,28 @@ class RuleEvaluateTest {
     }
 
     @Test
-    void aNullValueIsAFaultOfTheRule() {
+    void aNullValueIsAFaultNamingTheRule() {
         Rule rule = ruleReturning(null, DecisionMapping.of(Map.of(), REVIEW));
 
-        assertThatIllegalStateException().isThrownBy(() -> rule.evaluate(R1, "r1"));
+        assertThatIllegalStateException()
+                .isThrownBy(() -> rule.evaluate(R1, "r1"))
+                .withMessageContaining(rule.id());
     }
 
     @Test
-    void evaluateDoesNotIsolateFaultsFromTheLogic() {
+    void faultsFromTheLogicPropagateBecauseIsolationIsTheEnginesJob() {
         Rule rule = Rule.builder("broken").label("broken").status(RuleStatus.RELEASED).severity(Severity.INFO)
                 .logic(fields -> fields.requiredText("doesNotExist"))
                 .mapping(DecisionMapping.of(Map.of(), REVIEW))
                 .build();
 
-        assertThatThrownBy(() -> rule.evaluate(R1, "r1"))
-                .isInstanceOf(io.github.radek11.dq.data.MissingFieldException.class);
+        assertThatThrownBy(() -> rule.evaluate(R1, "r1")).isInstanceOf(MissingFieldException.class);
+    }
+
+    @Test
+    void recordAndRecordIdAreRequired() {
+        assertThatNullPointerException().isThrownBy(() -> VAT_FORMAT.evaluate(null, "r1"));
+        assertThatNullPointerException().isThrownBy(() -> VAT_FORMAT.evaluate(R1, null));
     }
 
     private static Rule ruleReturning(String value, DecisionMapping mapping) {

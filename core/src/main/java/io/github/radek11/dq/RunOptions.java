@@ -23,8 +23,15 @@ public record RunOptions(int batchSize, Predicate<Rule> ruleFilter, String idFie
             throw new IllegalArgumentException("batchSize must be at least 1, was " + batchSize);
         }
         Objects.requireNonNull(ruleFilter, "ruleFilter");
-        Objects.requireNonNull(idField, "idField");
-        Objects.requireNonNull(countryField, "countryField");
+        requireFieldName(idField, "idField");
+        requireFieldName(countryField, "countryField");
+    }
+
+    private static void requireFieldName(String name, String option) {
+        Objects.requireNonNull(name, option);
+        if (name.isBlank()) {
+            throw new IllegalArgumentException(option + " must not be blank");
+        }
     }
 
     /** @return batch size 1000, all rules, id in {@code id}, country in {@code country} */

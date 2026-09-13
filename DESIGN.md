@@ -16,7 +16,7 @@ Packages, dependencies pointing one way (`data` and `result` depend on nothing):
 | `dq` | `RuleEngine` — coordinates a run; `RunOptions` | `RuleSelection` — rules of a run; `RunCounters` — summary counts |
 | `dq.rule` | `Rule` — evaluates itself on a record; `RuleLogic`, `DecisionMapping`, `Scope`, `RuleStatus`, `RuleCatalog`, `RuleFilters` | `RecordingFieldReader` — records reads as provenance |
 | `dq.data` | `DataRecord` — record by field name; `FieldReader` — what logic reads through; field exceptions | — |
-| `dq.result` | `Result`, `Failure`, `RunSummary`, `ResultSink`, `Decision`, `Severity`, `FieldRead` | — |
+| `dq.result` | `Result`, `Failure` (sealed: `RuleFailure`, `RecordFailure`), `RunSummary`, `ResultSink`, `Decision`, `Severity`, `FieldRead` | — |
 
 Who does what in a run:
 
@@ -27,7 +27,7 @@ RuleEngine.run
     per selected rule:
       rule.appliesTo(country)            scope decides
       rule.evaluate(record, id)          logic via recording reader → value → mapping → Result
-      failure → Failure(RULE)            isolation stays in the engine
+      failure → RuleFailure              isolation stays in the engine
       sink.onResult / onFailure          outside the try: a failing sink ends the run
       RunCounters.add
     sink.onBatchEnd

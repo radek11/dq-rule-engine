@@ -20,8 +20,11 @@ public interface DataRecord {
     boolean contains(String name);
 
     /**
-     * @param name field name
-     * @return the field's value, or {@code null} when the field is missing or holds {@code null}
+     * Returns a field's value. The library calls this only for fields {@link #contains} reports
+     * as present, so {@code null} here means one thing: the field holds {@code null}.
+     *
+     * @param name name of a present field
+     * @return the field's value, {@code null} when the field holds {@code null}
      */
     Object get(String name);
 

@@ -1,5 +1,6 @@
 package io.github.radek11.dq;
 
+import io.github.radek11.dq.result.Failure;
 import io.github.radek11.dq.result.Result;
 import io.github.radek11.dq.result.RunSummary;
 
@@ -14,8 +15,8 @@ final class RunCounters {
         throw new UnsupportedOperationException("E2");
     }
 
-    /** Counts a failure of either kind. */
-    void addFailure() {
+    /** @param failure a failure of either kind emitted to the sink */
+    void add(Failure failure) {
         throw new UnsupportedOperationException("E2");
     }
 

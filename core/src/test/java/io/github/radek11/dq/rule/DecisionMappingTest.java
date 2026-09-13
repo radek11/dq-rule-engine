@@ -1,5 +1,6 @@
 package io.github.radek11.dq.rule;
 
+import io.github.radek11.dq.result.Decision;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
@@ -34,7 +35,7 @@ class DecisionMappingTest {
 
     @Test
     void laterChangesToTheSourceMapDoNotAffectTheMapping() {
-        Map<String, io.github.radek11.dq.result.Decision> cases = new HashMap<>(Map.of("ok", VALID));
+        Map<String, Decision> cases = new HashMap<>(Map.of("ok", VALID));
         DecisionMapping copied = DecisionMapping.of(cases, REVIEW);
 
         cases.put("ok", INVALID);

@@ -15,8 +15,8 @@ public interface RuleLogic {
     /**
      * Computes the value.
      *
-     * <p>Faults become a {@link io.github.radek11.dq.result.Failure Failure} of kind
-     * {@code RULE} for this rule on this record, and the run continues:
+     * <p>Faults become a {@link io.github.radek11.dq.result.RuleFailure RuleFailure} for this
+     * rule on this record, and the run continues:
      * <ul>
      *   <li>any {@link RuntimeException} thrown here — including the
      *       {@link io.github.radek11.dq.data.MissingFieldException MissingFieldException} and

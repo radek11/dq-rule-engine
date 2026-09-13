@@ -64,7 +64,14 @@ public final class Rule {
      * @return the result
      */
     public Result evaluate(DataRecord record, String recordId) {
-        throw new UnsupportedOperationException("E2");
+        Objects.requireNonNull(record, "record");
+        Objects.requireNonNull(recordId, "recordId");
+        RecordingFieldReader fields = new RecordingFieldReader(record);
+        String value = logic.compute(fields);
+        if (value == null) {
+            throw new IllegalStateException("Rule " + id + " computed no value");
+        }
+        return new Result(id, recordId, value, mapping.decide(value), severity, fields.reads());
     }
 
     /**

@@ -3,7 +3,9 @@ package io.github.radek11.dq;
 import io.github.radek11.dq.data.DataRecord;
 import io.github.radek11.dq.data.FieldTypeException;
 import io.github.radek11.dq.result.Failure;
+import io.github.radek11.dq.result.RecordFailure;
 import io.github.radek11.dq.result.ResultSink;
+import io.github.radek11.dq.result.RuleFailure;
 import io.github.radek11.dq.result.RunSummary;
 import io.github.radek11.dq.rule.RuleCatalog;
 import io.github.radek11.dq.rule.RuleLogic;
@@ -31,10 +33,11 @@ public final class RuleEngine {
      *
      * <p>What is isolated — reported to the sink as a {@link Failure}, the run continues:
      * <ul>
-     *   <li>a rule failing on a record, as described in {@link RuleLogic#compute};</li>
+     *   <li>a rule failing on a record, as described in {@link RuleLogic#compute} — a
+     *       {@link RuleFailure};</li>
      *   <li>a record that cannot be evaluated: a {@code null} element, no id, or an id or
-     *       country that is not text ({@link FieldTypeException}). Such a record gets one
-     *       failure of kind {@link Failure.Kind#RECORD} and no rule runs on it.</li>
+     *       country that is not text ({@link FieldTypeException}) — one {@link RecordFailure},
+     *       and no rule runs on that record.</li>
      * </ul>
      *
      * <p>What ends the run — propagates to the caller, no summary is returned:

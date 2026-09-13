@@ -68,9 +68,28 @@ class RecordingFieldReaderTest {
         var reader = new RecordingFieldReader(recordWith("country", "DE"));
 
         assertThatThrownBy(() -> reader.requiredText("vatId"))
-                .isInstanceOf(MissingFieldException.class)
-                .extracting(e -> ((MissingFieldException) e).fieldName())
-                .isEqualTo("vatId");
+                .isInstanceOfSatisfying(MissingFieldException.class,
+                        e -> assertThat(e.fieldName()).isEqualTo("vatId"));
+    }
+
+    @Test
+    void aFailedRequiredReadIsStillRecorded() {
+        var reader = new RecordingFieldReader(recordWith("country", "DE"));
+
+        assertThatThrownBy(() -> reader.requiredText("vatId")).isInstanceOf(MissingFieldException.class);
+
+        assertThat(reader.reads()).containsExactly(new FieldRead("vatId", MISSING, null));
+    }
+
+    @Test
+    void readsAreASnapshot() {
+        var reader = new RecordingFieldReader(recordWith("country", "DE"));
+        reader.text("country");
+        var before = reader.reads();
+
+        reader.text("vatId");
+
+        assertThat(before).hasSize(1);
     }
 
     @Test
