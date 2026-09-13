@@ -1,4 +1,4 @@
-package io.github.radek11.dq;
+package io.github.radek11.dq.data;
 
 import java.util.HashMap;
 import java.util.Map;

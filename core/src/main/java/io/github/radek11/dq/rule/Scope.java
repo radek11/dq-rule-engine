@@ -1,4 +1,4 @@
-package io.github.radek11.dq;
+package io.github.radek11.dq.rule;
 
 import java.util.Locale;
 import java.util.Objects;
@@ -7,7 +7,7 @@ import java.util.Objects;
  * Where a rule applies: everywhere, or to records of a single country.
  *
  * <p>Applicability is always enforced by the engine: a rule whose scope does not apply to a
- * record produces no {@link Result} for it.
+ * record produces no {@link io.github.radek11.dq.result.Result Result} for it.
  */
 public sealed interface Scope {
 

@@ -1,5 +1,8 @@
 package io.github.radek11.dq;
 
+import io.github.radek11.dq.rule.Rule;
+import io.github.radek11.dq.rule.RuleFilters;
+
 import java.util.Objects;
 import java.util.function.Predicate;
 

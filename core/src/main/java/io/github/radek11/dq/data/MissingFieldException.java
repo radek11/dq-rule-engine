@@ -1,4 +1,4 @@
-package io.github.radek11.dq;
+package io.github.radek11.dq.data;
 
 /** Thrown by {@link FieldReader#requiredText(String)} when a required field is absent. */
 public final class MissingFieldException extends RuntimeException {

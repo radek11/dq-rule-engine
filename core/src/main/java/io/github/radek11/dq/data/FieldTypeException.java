@@ -1,4 +1,4 @@
-package io.github.radek11.dq;
+package io.github.radek11.dq.data;
 
 /** Thrown by {@link FieldReader} when a field holds a value of an unexpected type. */
 public final class FieldTypeException extends RuntimeException {

@@ -1,4 +1,7 @@
-package io.github.radek11.dq;
+package io.github.radek11.dq.result;
+
+import io.github.radek11.dq.rule.Decision;
+import io.github.radek11.dq.rule.Severity;
 
 import java.util.Collections;
 import java.util.EnumMap;

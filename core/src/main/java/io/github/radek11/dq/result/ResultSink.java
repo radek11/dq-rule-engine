@@ -1,10 +1,10 @@
-package io.github.radek11.dq;
+package io.github.radek11.dq.result;
 
 /**
  * Receives the output of a run as it is produced. The engine keeps nothing: what the sink does
  * with results — write, count, forward or drop — decides the host's memory use.
  *
- * <p>All methods are called on the thread that called {@link RuleEngine#run}, one at a time. A
+ * <p>All methods are called on the thread that called {@link io.github.radek11.dq.RuleEngine#run RuleEngine.run}, one at a time. A
  * slow sink slows the run down.
  */
 public interface ResultSink {

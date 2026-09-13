@@ -1,4 +1,6 @@
-package io.github.radek11.dq;
+package io.github.radek11.dq.rule;
+
+import io.github.radek11.dq.data.FieldReader;
 
 /**
  * Computes a rule's value from a record, for example {@code "ok"} or {@code "blocked"}.

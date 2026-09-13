@@ -1,4 +1,4 @@
-package io.github.radek11.dq;
+package io.github.radek11.dq.rule;
 
 /**
  * Lifecycle status of a rule. The engine runs {@link #RELEASED} rules only, whatever the

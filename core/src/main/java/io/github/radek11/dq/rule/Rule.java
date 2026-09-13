@@ -1,4 +1,4 @@
-package io.github.radek11.dq;
+package io.github.radek11.dq.rule;
 
 import java.util.Objects;
 import java.util.Set;
