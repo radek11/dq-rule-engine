@@ -23,7 +23,7 @@ Who does what in a run:
 ```
 RuleEngine.run
   RuleSelection.of(catalog, filter)      snapshot, duplicate ids, filter, RELEASED only
-  per batch, per record:                 id and country, or a RECORD failure
+  per batch, per record:                 id and country, or a RecordFailure
     per selected rule:
       rule.appliesTo(country)            scope decides
       rule.evaluate(record, id)          logic via recording reader → value → mapping → Result
@@ -42,8 +42,9 @@ Decisions, each with the alternative it beat:
   `RuleSelection`, counting in `RunCounters`; the engine only coordinates and isolates.
   *Rejected:* `Rule` as a record read by the engine (`rule.logic()`, `rule.mapping()`) — every
   invariant would sit in one long method, testable only through a full run.
-- **Values crossing the boundary are records.** `Result`, `Failure`, `RunSummary`, `FieldRead`,
-  `RunOptions` are data the host reads, serializes and asserts on. *Rejected:* hiding them
+- **Values crossing the boundary are records.** `Result`, `RuleFailure`, `RecordFailure`, `RunSummary`, `FieldRead`,
+  `RunOptions` are data the host reads, serializes and asserts on. Kinds of failure are told
+  apart by type (sealed `Failure`), never by nullable fields. *Rejected:* hiding them
   behind interfaces — no behaviour to protect, only more code for the host.
 
 - **Push, not pull.** `run(records, options, sink)` returns a summary and emits everything
