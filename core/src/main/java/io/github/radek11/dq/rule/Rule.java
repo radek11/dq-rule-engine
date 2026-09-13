@@ -1,10 +1,15 @@
 package io.github.radek11.dq.rule;
 
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Set;
 
 /**
  * A named data-quality check. Immutable.
+ *
+ * <p>Equality compares all components, including {@code logic} and {@code mapping}, which use
+ * identity equality — two rules built separately from the same lambda are not equal. Use
+ * {@link #id()} to identify a rule.
  *
  * @param id stable identifier, unique within a catalog
  * @param label human-readable name
@@ -88,9 +93,15 @@ public record Rule(
             return this;
         }
 
-        /** @param categories categories of the rule @return this builder */
+        /**
+         * Sets the categories. Duplicates are ignored; categories are matched exactly,
+         * including case.
+         *
+         * @param categories categories of the rule
+         * @return this builder
+         */
         public Builder categories(String... categories) {
-            this.categories = Set.of(categories);
+            this.categories = Set.copyOf(Arrays.asList(categories));
             return this;
         }
 

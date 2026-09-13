@@ -12,20 +12,21 @@ public interface RuleCatalog {
 
     /**
      * Returns the current rules. Called once at the start of each run; the run uses that
-     * snapshot even if the catalog changes meanwhile.
+     * snapshot even if the catalog changes meanwhile. Rule ids must be unique — the engine
+     * checks this before reading any record, for every catalog implementation.
      *
-     * @return the rules, with unique ids
+     * @return the rules
      */
     List<Rule> rules();
 
     /**
-     * Creates an in-memory catalog.
+     * Creates an in-memory catalog holding a copy of the given rules.
      *
      * @param rules the rules
      * @return the catalog
-     * @throws IllegalArgumentException when two rules share an id
      */
     static RuleCatalog of(Collection<Rule> rules) {
-        throw new UnsupportedOperationException("E2");
+        List<Rule> copy = List.copyOf(rules);
+        return () -> copy;
     }
 }

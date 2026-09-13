@@ -20,7 +20,7 @@ public final class RuleFilters {
     }
 
     /**
-     * @param statuses accepted statuses
+     * @param statuses accepted statuses; none given selects no rule
      * @return a filter selecting rules with one of the statuses
      */
     public static Predicate<Rule> status(RuleStatus... statuses) {
@@ -28,15 +28,16 @@ public final class RuleFilters {
     }
 
     /**
-     * @param categories accepted categories
-     * @return a filter selecting rules that have at least one of the categories
+     * @param categories accepted categories, matched exactly; none given selects no rule
+     * @return a filter selecting rules that have at least one of the categories; a rule without
+     *     categories is never selected
      */
     public static Predicate<Rule> category(String... categories) {
         throw new UnsupportedOperationException("E4");
     }
 
     /**
-     * @param scopes accepted scopes
+     * @param scopes accepted scopes; none given selects no rule
      * @return a filter selecting rules whose scope is one of the given scopes
      */
     public static Predicate<Rule> scope(Scope... scopes) {

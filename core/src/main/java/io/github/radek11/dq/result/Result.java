@@ -16,7 +16,7 @@ import java.util.Objects;
  * @param value value computed by the rule's logic
  * @param decision decision mapped from {@code value}
  * @param severity severity of the rule
- * @param fieldsRead fields read by the rule, in read order
+ * @param fieldsRead fields read by the rule, in read order; a field read twice appears twice
  */
 public record Result(
         String ruleId,

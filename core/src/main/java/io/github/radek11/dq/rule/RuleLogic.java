@@ -13,8 +13,21 @@ import io.github.radek11.dq.data.FieldReader;
 public interface RuleLogic {
 
     /**
+     * Computes the value.
+     *
+     * <p>Faults become a {@link io.github.radek11.dq.result.Failure Failure} of kind
+     * {@code RULE} for this rule on this record, and the run continues:
+     * <ul>
+     *   <li>any {@link RuntimeException} thrown here — including the
+     *       {@link io.github.radek11.dq.data.MissingFieldException MissingFieldException} and
+     *       {@link io.github.radek11.dq.data.FieldTypeException FieldTypeException} thrown by
+     *       {@code fields} — is the failure's cause;</li>
+     *   <li>a {@code null} return value gets an {@link IllegalStateException} as the cause.</li>
+     * </ul>
+     * A JVM {@link Error} is not isolated and ends the run.
+     *
      * @param fields reader over the record; every read is recorded as provenance
-     * @return the computed value; {@code null} is reported as a failure of the rule
+     * @return the computed value
      */
     String compute(FieldReader fields);
 }

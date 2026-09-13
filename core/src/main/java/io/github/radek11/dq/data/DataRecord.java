@@ -44,9 +44,10 @@ public interface DataRecord {
                 return copy.get(name);
             }
 
+            // Field names only: records hold company and personal data that must not leak into logs.
             @Override
             public String toString() {
-                return "DataRecord" + copy;
+                return "DataRecord" + copy.keySet();
             }
         };
     }

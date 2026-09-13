@@ -1,9 +1,12 @@
 package io.github.radek11.dq;
 
 import io.github.radek11.dq.data.DataRecord;
+import io.github.radek11.dq.data.FieldTypeException;
+import io.github.radek11.dq.result.Failure;
 import io.github.radek11.dq.result.ResultSink;
 import io.github.radek11.dq.result.RunSummary;
 import io.github.radek11.dq.rule.RuleCatalog;
+import io.github.radek11.dq.rule.RuleLogic;
 
 import java.util.Iterator;
 import java.util.Objects;
@@ -26,9 +29,26 @@ public final class RuleEngine {
     /**
      * Validates records and streams every result and failure to the sink as it is produced.
      *
-     * <p>A failing rule or a bad record is reported to the sink and the run continues. An
-     * exception thrown by the input iterator itself (for example unreadable input) ends the run
-     * and propagates to the caller.
+     * <p>What is isolated — reported to the sink as a {@link Failure}, the run continues:
+     * <ul>
+     *   <li>a rule failing on a record, as described in {@link RuleLogic#compute};</li>
+     *   <li>a record that cannot be evaluated: a {@code null} element, no id, or an id or
+     *       country that is not text ({@link FieldTypeException}). Such a record gets one
+     *       failure of kind {@link Failure.Kind#RECORD} and no rule runs on it.</li>
+     * </ul>
+     *
+     * <p>What ends the run — propagates to the caller, no summary is returned:
+     * <ul>
+     *   <li>an exception thrown by the input iterator, for example unreadable input;</li>
+     *   <li>an exception thrown by the sink — it is the host's fault, not the rule's;</li>
+     *   <li>an exception thrown by the catalog, or two rules with the same id
+     *       ({@link IllegalArgumentException}), both before any record is read;</li>
+     *   <li>a JVM {@link Error}.</li>
+     * </ul>
+     *
+     * <p>Records are read in batches of {@link RunOptions#batchSize()}. After each batch,
+     * including a final partial one, the sink's {@link ResultSink#onBatchEnd} is called; an
+     * empty input produces no call.
      *
      * @param records the input, consumed once
      * @param options batch size, rule selection and field names

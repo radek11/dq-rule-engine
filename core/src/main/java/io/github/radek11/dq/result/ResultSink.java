@@ -1,11 +1,14 @@
 package io.github.radek11.dq.result;
 
 /**
- * Receives the output of a run as it is produced. The engine keeps nothing: what the sink does
- * with results — write, count, forward or drop — decides the host's memory use.
+ * Receives the output of a run as it is produced. The engine keeps nothing beyond the current
+ * batch: what the sink does with results — write, count, forward or drop — decides the rest of
+ * the host's memory use.
  *
- * <p>All methods are called on the thread that called {@link io.github.radek11.dq.RuleEngine#run RuleEngine.run}, one at a time. A
- * slow sink slows the run down.
+ * <p>All methods are called on the thread that called
+ * {@link io.github.radek11.dq.RuleEngine#run RuleEngine.run}, one at a time. A slow sink slows
+ * the run down. An exception thrown by the sink is not isolated: it ends the run and reaches
+ * the caller.
  */
 public interface ResultSink {
 
@@ -16,9 +19,10 @@ public interface ResultSink {
     void onFailure(Failure failure);
 
     /**
-     * Called after each batch — a point where a host can flush, commit or checkpoint.
+     * Called after each batch, including a final partial one — a point where a host can flush,
+     * commit or checkpoint. Not called for an empty input.
      *
-     * @param recordsSoFar number of records consumed by the run so far
+     * @param recordsSoFar number of records consumed by the run so far, rejected ones included
      */
     default void onBatchEnd(long recordsSoFar) {
     }

@@ -16,8 +16,10 @@ import java.util.Objects;
  *
  * @param results number of results
  * @param failures number of failures, of both kinds
- * @param byDecision number of results per decision; every decision is present
- * @param bySeverity number of results per severity; every severity is present
+ * @param byDecision number of results per decision; every decision is present, missing keys
+ *     are stored as zero
+ * @param bySeverity number of results per severity; every severity is present, missing keys
+ *     are stored as zero
  */
 public record RunSummary(
         long results,
@@ -26,7 +28,15 @@ public record RunSummary(
         Map<Severity, Long> bySeverity) {
 
     public RunSummary {
-        byDecision = Collections.unmodifiableMap(new EnumMap<>(Objects.requireNonNull(byDecision, "byDecision")));
-        bySeverity = Collections.unmodifiableMap(new EnumMap<>(Objects.requireNonNull(bySeverity, "bySeverity")));
+        byDecision = complete(Decision.class, Objects.requireNonNull(byDecision, "byDecision"));
+        bySeverity = complete(Severity.class, Objects.requireNonNull(bySeverity, "bySeverity"));
+    }
+
+    private static <K extends Enum<K>> Map<K, Long> complete(Class<K> type, Map<K, Long> counts) {
+        EnumMap<K, Long> copy = new EnumMap<>(type);
+        for (K key : type.getEnumConstants()) {
+            copy.put(key, counts.getOrDefault(key, 0L));
+        }
+        return Collections.unmodifiableMap(copy);
     }
 }

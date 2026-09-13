@@ -26,9 +26,13 @@ Decisions, each with the alternative it beat:
 
 - **Push, not pull.** `run(records, options, sink)` returns a summary and emits everything
   else to the sink. *Rejected:* `Stream<Outcome>` — the summary is only complete after a
-  terminal operation and the stream must be closed. Push keeps memory bounded by
-  construction (the engine keeps nothing) and a slow sink slows the run, because the engine
-  calls it synchronously.
+  terminal operation and the stream must be closed. With push the engine keeps nothing beyond
+  the current batch; what the sink keeps is the host's choice. A slow sink slows the run,
+  because the engine calls it synchronously.
+- **Clear line between isolated and fatal.** A failing rule or an unusable record becomes a
+  `Failure` and the run goes on. Unreadable input, a failing sink, a broken catalog and JVM
+  errors end the run — they are faults of the host or the platform, and reporting them as
+  rule failures would hide them.
 - **Records are field maps, not POJOs.** `DataRecord.get("vatId")`. *Rejected:* a
   `BusinessPartner` class — master data differs per country and per client, and a fixed
   class makes the library single-use. The core has no JSON dependency; parsing is the host's
