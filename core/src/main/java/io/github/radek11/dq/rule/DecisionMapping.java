@@ -40,7 +40,7 @@ public final class DecisionMapping {
      * @return the mapped decision, or the fallback for an unmapped value
      */
     Decision decide(String value) {
-        throw new UnsupportedOperationException("E2");
+         return cases.getOrDefault(value, fallback);
     }
 
     @Override
