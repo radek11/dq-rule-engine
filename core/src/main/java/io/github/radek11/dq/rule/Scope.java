@@ -41,14 +41,15 @@ public final class Scope {
      * after the same normalization as the scope's code: stripped, upper-case.
      *
      * @param recordCountry the record's country, or {@code null} when it has none; a record
-     *     without a country gets {@link #WORLD} rules only
+     *     without a country, or with a blank one, gets {@link #WORLD} rules only
      * @return {@code true} when the rule should run on the record
      */
     boolean appliesTo(String recordCountry) {
         if (country == null) {
             return true;
         }
-        throw new UnsupportedOperationException("E4");
+        // A blank record country normalizes to "", which no country scope can hold.
+        return recordCountry != null && country.equals(normalize(recordCountry));
     }
 
     static String normalize(String code) {
