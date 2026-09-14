@@ -1,10 +1,10 @@
-package io.github.radek11.dq.result;
+package io.github.radek11.dq.output;
 
 import org.junit.jupiter.api.Test;
 
-import static io.github.radek11.dq.result.FieldRead.Presence.MISSING;
-import static io.github.radek11.dq.result.FieldRead.Presence.NULL;
-import static io.github.radek11.dq.result.FieldRead.Presence.PRESENT;
+import static io.github.radek11.dq.output.FieldRead.Presence.MISSING;
+import static io.github.radek11.dq.output.FieldRead.Presence.NULL;
+import static io.github.radek11.dq.output.FieldRead.Presence.PRESENT;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 

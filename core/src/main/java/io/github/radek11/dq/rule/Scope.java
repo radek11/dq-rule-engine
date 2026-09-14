@@ -8,7 +8,7 @@ import java.util.Objects;
  * Immutable value object.
  *
  * <p>Applicability is always enforced by the engine: a rule whose scope does not apply to a
- * record produces no {@link io.github.radek11.dq.result.Result Result} for it.
+ * record produces no {@link io.github.radek11.dq.output.Result Result} for it.
  */
 public final class Scope {
 

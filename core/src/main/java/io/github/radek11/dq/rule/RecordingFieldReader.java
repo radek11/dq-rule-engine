@@ -1,18 +1,18 @@
 package io.github.radek11.dq.rule;
 
-import io.github.radek11.dq.data.DataRecord;
-import io.github.radek11.dq.data.FieldReader;
-import io.github.radek11.dq.data.FieldTypeException;
-import io.github.radek11.dq.data.MissingFieldException;
-import io.github.radek11.dq.result.FieldRead;
+import io.github.radek11.dq.input.DataRecord;
+import io.github.radek11.dq.input.FieldReader;
+import io.github.radek11.dq.input.FieldTypeException;
+import io.github.radek11.dq.input.MissingFieldException;
+import io.github.radek11.dq.output.FieldRead;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static io.github.radek11.dq.result.FieldRead.Presence.MISSING;
-import static io.github.radek11.dq.result.FieldRead.Presence.NULL;
-import static io.github.radek11.dq.result.FieldRead.Presence.PRESENT;
+import static io.github.radek11.dq.output.FieldRead.Presence.MISSING;
+import static io.github.radek11.dq.output.FieldRead.Presence.NULL;
+import static io.github.radek11.dq.output.FieldRead.Presence.PRESENT;
 
 /**
  * Field reader that records every read, for one rule on one record. Its reads become the

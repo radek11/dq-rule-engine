@@ -1,10 +1,10 @@
-package io.github.radek11.dq.data;
+package io.github.radek11.dq.input;
 
 import java.util.Optional;
 
 /**
  * The only way rule logic reads a record. Every read is recorded and becomes the provenance of
- * the {@link io.github.radek11.dq.result.Result Result}, so provenance always matches what the
+ * the {@link io.github.radek11.dq.output.Result Result}, so provenance always matches what the
  * rule actually looked at — including reads of fields that are missing.
  *
  * <p>Instances are created by the engine for a single rule on a single record.

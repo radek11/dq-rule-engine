@@ -1,6 +1,6 @@
 package io.github.radek11.dq.rule;
 
-import io.github.radek11.dq.data.FieldReader;
+import io.github.radek11.dq.input.FieldReader;
 
 /**
  * Computes a rule's value from a record, for example {@code "ok"} or {@code "blocked"}.
@@ -15,12 +15,12 @@ public interface RuleLogic {
     /**
      * Computes the value.
      *
-     * <p>Faults become a {@link io.github.radek11.dq.result.RuleFailure RuleFailure} for this
+     * <p>Faults become a {@link io.github.radek11.dq.output.RuleFailure RuleFailure} for this
      * rule on this record, and the run continues:
      * <ul>
      *   <li>any {@link RuntimeException} thrown here — including the
-     *       {@link io.github.radek11.dq.data.MissingFieldException MissingFieldException} and
-     *       {@link io.github.radek11.dq.data.FieldTypeException FieldTypeException} thrown by
+     *       {@link io.github.radek11.dq.input.MissingFieldException MissingFieldException} and
+     *       {@link io.github.radek11.dq.input.FieldTypeException FieldTypeException} thrown by
      *       {@code fields} — is the failure's cause;</li>
      *   <li>a {@code null} return value gets an {@link IllegalStateException} as the cause.</li>
      * </ul>

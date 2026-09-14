@@ -1,17 +1,17 @@
 package io.github.radek11.dq.rule;
 
-import io.github.radek11.dq.data.DataRecord;
-import io.github.radek11.dq.data.FieldTypeException;
-import io.github.radek11.dq.data.MissingFieldException;
-import io.github.radek11.dq.result.FieldRead;
+import io.github.radek11.dq.input.DataRecord;
+import io.github.radek11.dq.input.FieldTypeException;
+import io.github.radek11.dq.input.MissingFieldException;
+import io.github.radek11.dq.output.FieldRead;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static io.github.radek11.dq.result.FieldRead.Presence.MISSING;
-import static io.github.radek11.dq.result.FieldRead.Presence.NULL;
-import static io.github.radek11.dq.result.FieldRead.Presence.PRESENT;
+import static io.github.radek11.dq.output.FieldRead.Presence.MISSING;
+import static io.github.radek11.dq.output.FieldRead.Presence.NULL;
+import static io.github.radek11.dq.output.FieldRead.Presence.PRESENT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 

@@ -1,4 +1,4 @@
-package io.github.radek11.dq.result;
+package io.github.radek11.dq.output;
 
 /**
  * A fault isolated by the engine and reported next to the results. A failure never stops the

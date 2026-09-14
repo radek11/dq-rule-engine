@@ -1,4 +1,4 @@
-package io.github.radek11.dq.result;
+package io.github.radek11.dq.output;
 
 /**
  * How serious a rule is. Every {@link Result} carries the

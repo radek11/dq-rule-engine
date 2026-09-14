@@ -1,8 +1,8 @@
 package io.github.radek11.dq;
 
-import io.github.radek11.dq.result.Failure;
-import io.github.radek11.dq.result.Result;
-import io.github.radek11.dq.result.RunSummary;
+import io.github.radek11.dq.output.Failure;
+import io.github.radek11.dq.output.Result;
+import io.github.radek11.dq.output.RunSummary;
 
 /**
  * Mutable counters of one run. Constant memory: a fixed number of counters, whatever the volume.

@@ -9,14 +9,19 @@ RuleEngine engine = new RuleEngine(RuleCatalog.of(rules));
 RunSummary summary = engine.run(records, RunOptions.defaults().withBatchSize(500), sink);
 ```
 
-Packages, dependencies pointing one way (`data` and `result` depend on nothing):
+Packages follow the flow of a run, dependencies pointing one way (`input` and `output` depend on nothing):
 
-| Package | Public types | Hidden (package-private) |
-|---|---|---|
-| `dq` | `RuleEngine` — coordinates a run; `RunOptions` | `RuleSelection` — rules of a run; `RunCounters` — summary counts |
-| `dq.rule` | `Rule` — evaluates itself on a record; `RuleLogic`, `DecisionMapping`, `Scope`, `RuleStatus`, `RuleCatalog`, `RuleFilters` | `RecordingFieldReader` — records reads as provenance |
-| `dq.data` | `DataRecord` — record by field name; `FieldReader` — what logic reads through; field exceptions | — |
-| `dq.result` | `Result`, `Failure` (sealed: `RuleFailure`, `RecordFailure`), `RunSummary`, `ResultSink`, `Decision`, `Severity`, `FieldRead` | — |
+| Package | Role | Public types | Hidden (package-private) |
+|---|---|---|---|
+| `dq.input` | what comes in | `DataRecord` — record by field name; `FieldReader` — what logic reads through; field exceptions | — |
+| `dq.rule` | what is checked | `Rule` — evaluates itself on a record; `RuleLogic`, `DecisionMapping`, `Scope`, `RuleStatus`, `RuleCatalog`, `RuleFilters` | `RecordingFieldReader` — records reads as provenance |
+| `dq` | how a run proceeds | `RuleEngine` — coordinates a run; `RunOptions` | `RuleSelection` — rules of a run; `RunCounters` — summary counts |
+| `dq.output` | what comes out | `Result`, `Failure` (sealed: `RuleFailure`, `RecordFailure`), `RunSummary`, `ResultSink`, `Decision`, `Severity`, `FieldRead` | — |
+
+*Rejected:* one package per function (`selection`, `evaluation`, `counting`). Package-private
+access ends at the package boundary, so the helpers would have to become public API.
+`Decision` and `Severity` are also rule vocabulary, but they stay in `output`: moving them to
+`rule` would make `output` depend on `rule`.
 
 Who does what in a run:
 

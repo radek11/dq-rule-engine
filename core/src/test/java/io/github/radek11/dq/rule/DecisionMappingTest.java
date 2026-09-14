@@ -1,14 +1,14 @@
 package io.github.radek11.dq.rule;
 
-import io.github.radek11.dq.result.Decision;
+import io.github.radek11.dq.output.Decision;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static io.github.radek11.dq.result.Decision.INVALID;
-import static io.github.radek11.dq.result.Decision.REVIEW;
-import static io.github.radek11.dq.result.Decision.VALID;
+import static io.github.radek11.dq.output.Decision.INVALID;
+import static io.github.radek11.dq.output.Decision.REVIEW;
+import static io.github.radek11.dq.output.Decision.VALID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 

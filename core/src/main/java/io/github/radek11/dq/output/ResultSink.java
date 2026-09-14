@@ -1,4 +1,4 @@
-package io.github.radek11.dq.result;
+package io.github.radek11.dq.output;
 
 /**
  * Receives the output of a run as it is produced. The engine keeps nothing beyond the current

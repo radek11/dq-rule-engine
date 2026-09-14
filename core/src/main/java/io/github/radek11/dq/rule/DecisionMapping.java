@@ -1,6 +1,6 @@
 package io.github.radek11.dq.rule;
 
-import io.github.radek11.dq.result.Decision;
+import io.github.radek11.dq.output.Decision;
 
 import java.util.Map;
 import java.util.Objects;

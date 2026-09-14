@@ -1,6 +1,6 @@
 package io.github.radek11.dq;
 
-import io.github.radek11.dq.data.DataRecord;
+import io.github.radek11.dq.input.DataRecord;
 import io.github.radek11.dq.rule.DecisionMapping;
 import io.github.radek11.dq.rule.Rule;
 import io.github.radek11.dq.rule.RuleStatus;
@@ -8,12 +8,12 @@ import io.github.radek11.dq.rule.RuleStatus;
 import java.util.List;
 import java.util.Map;
 
-import static io.github.radek11.dq.result.Decision.INVALID;
-import static io.github.radek11.dq.result.Decision.NOT_APPLICABLE;
-import static io.github.radek11.dq.result.Decision.REVIEW;
-import static io.github.radek11.dq.result.Decision.VALID;
-import static io.github.radek11.dq.result.Severity.ERROR;
-import static io.github.radek11.dq.result.Severity.WARNING;
+import static io.github.radek11.dq.output.Decision.INVALID;
+import static io.github.radek11.dq.output.Decision.NOT_APPLICABLE;
+import static io.github.radek11.dq.output.Decision.REVIEW;
+import static io.github.radek11.dq.output.Decision.VALID;
+import static io.github.radek11.dq.output.Severity.ERROR;
+import static io.github.radek11.dq.output.Severity.WARNING;
 
 /**
  * The scenario from the task, section 5: three records, three rules.

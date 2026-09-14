@@ -1,4 +1,4 @@
-package io.github.radek11.dq.result;
+package io.github.radek11.dq.output;
 
 import java.util.List;
 import java.util.Objects;

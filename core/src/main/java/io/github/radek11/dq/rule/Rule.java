@@ -1,8 +1,8 @@
 package io.github.radek11.dq.rule;
 
-import io.github.radek11.dq.data.DataRecord;
-import io.github.radek11.dq.result.Result;
-import io.github.radek11.dq.result.Severity;
+import io.github.radek11.dq.input.DataRecord;
+import io.github.radek11.dq.output.Result;
+import io.github.radek11.dq.output.Severity;
 
 import java.util.Arrays;
 import java.util.Objects;

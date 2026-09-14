@@ -1,12 +1,12 @@
 package io.github.radek11.dq;
 
-import io.github.radek11.dq.data.DataRecord;
-import io.github.radek11.dq.data.FieldTypeException;
-import io.github.radek11.dq.result.Failure;
-import io.github.radek11.dq.result.RecordFailure;
-import io.github.radek11.dq.result.ResultSink;
-import io.github.radek11.dq.result.RuleFailure;
-import io.github.radek11.dq.result.RunSummary;
+import io.github.radek11.dq.input.DataRecord;
+import io.github.radek11.dq.input.FieldTypeException;
+import io.github.radek11.dq.output.Failure;
+import io.github.radek11.dq.output.RecordFailure;
+import io.github.radek11.dq.output.ResultSink;
+import io.github.radek11.dq.output.RuleFailure;
+import io.github.radek11.dq.output.RunSummary;
 import io.github.radek11.dq.rule.RuleCatalog;
 import io.github.radek11.dq.rule.RuleLogic;
 
