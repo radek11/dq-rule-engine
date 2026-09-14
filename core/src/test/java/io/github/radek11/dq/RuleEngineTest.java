@@ -131,6 +131,41 @@ class RuleEngineTest {
                 .containsExactly("result countryBlocked", "failure vatRequired", "result ibanFormat", "batch end 1");
     }
 
+    // W-28 — results are emitted as they are produced, not collected per batch
+
+    @Test
+    void eachResultReachesTheSinkBeforeTheNextRuleIsEvaluated() {
+        List<String> log = new ArrayList<>();
+        RuleLogic logged = fields -> {
+            log.add("evaluate " + fields.text("id").orElseThrow());
+            return "ok";
+        };
+        ResultSink logging = new ResultSink() {
+            @Override
+            public void onResult(Result result) {
+                log.add("result " + result.ruleId() + " " + result.recordId());
+            }
+
+            @Override
+            public void onFailure(Failure failure) {
+                log.add("failure");
+            }
+
+            @Override
+            public void onBatchEnd(long recordsSoFar) {
+                log.add("batch end " + recordsSoFar);
+            }
+        };
+
+        engine(List.of(rule("a", RuleStatus.RELEASED, logged), rule("b", RuleStatus.RELEASED, logged)))
+                .run(List.of(R1, R2).iterator(), RunOptions.defaults().withBatchSize(2), logging);
+
+        assertThat(log).containsExactly(
+                "evaluate r1", "result a r1", "evaluate r1", "result b r1",
+                "evaluate r2", "result a r2", "evaluate r2", "result b r2",
+                "batch end 2");
+    }
+
     // K6 — summary
 
     @Test
