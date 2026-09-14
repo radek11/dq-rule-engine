@@ -13,6 +13,7 @@ import io.github.radek11.dq.output.Severity;
 import io.github.radek11.dq.rule.DecisionMapping;
 import io.github.radek11.dq.rule.Rule;
 import io.github.radek11.dq.rule.RuleCatalog;
+import io.github.radek11.dq.rule.RuleFilters;
 import io.github.radek11.dq.rule.RuleLogic;
 import io.github.radek11.dq.rule.RuleStatus;
 import io.github.radek11.dq.rule.Scope;
@@ -25,6 +26,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static io.github.radek11.dq.Fixture.COUNTRY_BLOCKED;
@@ -240,6 +242,47 @@ class RuleEngineTest {
 
         assertThat(byLand.results()).isEqualTo(1);
         assertThat(byCountry.results()).isZero();
+    }
+
+    // K9 — rule filters, through the engine
+
+    /** Removing the negate, the and-clause or the or-clause each selects a different set of rules. */
+    @Test
+    void readyMadeFiltersCombineWithAndOrNegate() {
+        Predicate<Rule> filter = RuleFilters.scope(Scope.WORLD)
+                .and(RuleFilters.category("compliance").negate())
+                .or(RuleFilters.scope(Scope.country("DE")));
+
+        engine(append(RULES, GERMAN_CHECK)).run(List.of(R1).iterator(), RunOptions.defaults().withRuleFilter(filter), sink);
+
+        assertThat(sink.results()).extracting(Result::ruleId)
+                .containsExactly(VAT_FORMAT.id(), IBAN_FORMAT.id(), GERMAN_CHECK.id());
+    }
+
+    @Test
+    void aStatusFilterCannotBringDraftOrDeprecatedRulesIntoTheRun() {
+        Rule draft = rule("draftCheck", RuleStatus.DRAFT, fields -> "ok");
+        Rule deprecated = rule("deprecatedCheck", RuleStatus.DEPRECATED, fields -> "ok");
+
+        RunSummary summary = engine(append(RULES, draft, deprecated)).run(RECORDS.iterator(),
+                RunOptions.defaults().withRuleFilter(RuleFilters.status(RuleStatus.DRAFT, RuleStatus.DEPRECATED)), sink);
+
+        assertThat(sink.results()).isEmpty();
+        assertThat(sink.failures()).isEmpty();
+        assertThat(summary.results()).isZero();
+        assertThat(sink.batchEnds()).containsExactly(3L);  // the records were read; only the rules were left out
+    }
+
+    @Test
+    void anExceptionFromTheRuleFilterFailsTheRunBeforeTheFirstRecordIsRead() {
+        IllegalStateException filterBroken = new IllegalStateException("filter broken");
+        Predicate<Rule> throwing = rule -> {
+            throw filterBroken;
+        };
+
+        assertThatThrownBy(() -> engine(RULES).run(neverRead(), RunOptions.defaults().withRuleFilter(throwing), sink))
+                .isSameAs(filterBroken);
+        assertThat(sink.events()).isEmpty();
     }
 
     // The run contract: what ends the run
