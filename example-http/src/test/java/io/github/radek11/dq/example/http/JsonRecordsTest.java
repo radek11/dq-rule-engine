@@ -68,7 +68,7 @@ class JsonRecordsTest {
     }
 
     @Test
-    void aSyntaxErrorSurfacesOnlyWhenTheIteratorReachesIt() {
+    void aSyntaxErrorInsideAnElementIsThrownByNextNotSwallowed() {
         JsonRecords records = records("""
                 [{"id": "r1"}, {"id": oops}]""");
 
