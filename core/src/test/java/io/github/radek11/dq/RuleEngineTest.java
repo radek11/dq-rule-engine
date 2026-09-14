@@ -15,6 +15,7 @@ import io.github.radek11.dq.rule.Rule;
 import io.github.radek11.dq.rule.RuleCatalog;
 import io.github.radek11.dq.rule.RuleLogic;
 import io.github.radek11.dq.rule.RuleStatus;
+import io.github.radek11.dq.rule.Scope;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -53,6 +54,13 @@ class RuleEngineTest {
     /** Fails on r3, which has no vatId — "a missing field" from F3. */
     private static final Rule VAT_REQUIRED = rule("vatRequired", RuleStatus.RELEASED,
             fields -> fields.requiredText("vatId").isEmpty() ? "bad" : "ok");
+
+    /** Applies to German records only. */
+    private static final Rule GERMAN_CHECK = Rule.builder("germanCheck").label("germanCheck")
+            .status(RuleStatus.RELEASED).severity(INFO).scope(Scope.country("DE"))
+            .logic(fields -> "ok")
+            .mapping(DecisionMapping.of(Map.of("ok", VALID), REVIEW))
+            .build();
 
     /** Has country and vatId, but no id — a record the engine cannot name in a result. */
     private static final DataRecord NO_ID = DataRecord.of(Map.of("country", "DE", "vatId", "DE111111111"));
@@ -189,17 +197,49 @@ class RuleEngineTest {
         Rule draft = rule("draftCheck", RuleStatus.DRAFT, fields -> "ok");
         List<DataRecord> records = List.of(R1, NO_ID, R2, R3);
 
-        engine(append(RULES, VAT_REQUIRED, draft)).run(records.iterator(), RunOptions.defaults().withBatchSize(3), sink);
+        engine(append(RULES, VAT_REQUIRED, GERMAN_CHECK, draft))
+                .run(records.iterator(), RunOptions.defaults().withBatchSize(3), sink);
 
         long consumed = sink.batchEnds().getLast();
         long rejected = sink.failures().stream().filter(RecordFailure.class::isInstance).count();
         long ruleFailures = sink.failures().stream().filter(RuleFailure.class::isInstance).count();
-        long selectedRules = 4;  // the three fixture rules and vatRequired; the draft never runs
-        long skipped = 0;        // every rule is WORLD; skips by country come with E4
+        long selectedRules = 5;  // the three fixture rules, vatRequired and germanCheck; the draft never runs
+        long skipped = 2;        // germanCheck (DE) on r2 (FR) and r3 (ZZ); NO_ID is rejected before scope
 
         assertThat(consumed).isEqualTo(records.size());
         assertThat(sink.results()).extracting(Result::ruleId).doesNotContain("draftCheck");
         assertThat(sink.results().size() + ruleFailures + skipped).isEqualTo((consumed - rejected) * selectedRules);
+    }
+
+    // K9 — country scope, through the engine
+
+    @Test
+    void aCountryRuleRunsOnlyOnRecordsOfItsCountry() {
+        DataRecord noCountry = DataRecord.of(Map.of("id", "r4", "vatId", "DE111111111"));
+
+        engine(List.of(GERMAN_CHECK, VAT_FORMAT)).run(List.of(R1, R2, R3, noCountry).iterator(), RunOptions.defaults(), sink);
+
+        assertThat(sink.results())
+                .extracting(Result::ruleId, Result::recordId)
+                .containsExactly(
+                        tuple("germanCheck", "r1"), tuple("vatFormat", "r1"),
+                        tuple("vatFormat", "r2"),
+                        tuple("vatFormat", "r3"),
+                        tuple("vatFormat", "r4"));
+        assertThat(sink.failures()).isEmpty();
+    }
+
+    @Test
+    void theCountryIsReadFromTheConfiguredField() {
+        DataRecord record = DataRecord.of(Map.of("id", "r1", "land", "DE", "country", "FR"));
+
+        RunSummary byLand = engine(List.of(GERMAN_CHECK)).run(List.of(record).iterator(),
+                RunOptions.defaults().withCountryField("land"), new RecordingSink());
+        RunSummary byCountry = engine(List.of(GERMAN_CHECK)).run(List.of(record).iterator(),
+                RunOptions.defaults(), new RecordingSink());
+
+        assertThat(byLand.results()).isEqualTo(1);
+        assertThat(byCountry.results()).isZero();
     }
 
     // The run contract: what ends the run
@@ -322,10 +362,10 @@ class RuleEngineTest {
 
     @Test
     void theIdIsReadFromTheConfiguredField() {
-        DataRecord record = DataRecord.of(Map.of("partnerId", "p7", "land", "DE", "vatId", "DE111111111"));
+        DataRecord record = DataRecord.of(Map.of("partnerId", "p7", "vatId", "DE111111111"));
 
         engine(List.of(VAT_FORMAT)).run(List.of(record).iterator(),
-                RunOptions.defaults().withIdField("partnerId").withCountryField("land"), sink);
+                RunOptions.defaults().withIdField("partnerId"), sink);
 
         assertThat(sink.results()).extracting(Result::recordId).containsExactly("p7");
     }
