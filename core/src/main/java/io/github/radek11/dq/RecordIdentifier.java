@@ -34,10 +34,12 @@ final class RecordIdentifier {
         if (record == null) {
             return rejected(Optional.empty(), index, new NullPointerException("Input element is null"));
         }
+        // Reads can fail in the host's DataRecord as well as with FieldTypeException; either way
+        // it is a bad record, isolated like a failing rule.
         Optional<String> id;
         try {
             id = text(record, idField);
-        } catch (FieldTypeException e) {
+        } catch (Exception e) {
             return rejected(Optional.empty(), index, e);
         }
         if (id.isEmpty()) {
@@ -49,7 +51,7 @@ final class RecordIdentifier {
         }
         try {
             return new Identified(record, id.get(), text(record, countryField));
-        } catch (FieldTypeException e) {
+        } catch (Exception e) {
             return rejected(id, index, e);
         }
     }

@@ -265,7 +265,24 @@ class RuleEngineTest {
         assertThat(summary.failures()).isZero();
     }
 
+    /** A caller may pass the largest batch size to mean "one batch"; memory must follow the input, not the option. */
+    @Test
+    void theLargestBatchSizeRunsTheInputAsOneBatch() {
+        RunSummary summary = engine(RULES).run(RECORDS.iterator(), RunOptions.defaults().withBatchSize(Integer.MAX_VALUE), sink);
+
+        assertThat(summary.results()).isEqualTo(9);
+        assertThat(sink.batchEnds()).containsExactly(3L);
+    }
+
     // The run contract: options and reuse
+
+    @Test
+    void theCallersFilterNarrowsTheRun() {
+        engine(RULES).run(RECORDS.iterator(),
+                RunOptions.defaults().withRuleFilter(rule -> rule.severity() == WARNING), sink);
+
+        assertThat(sink.results()).extracting(Result::ruleId).containsOnly(IBAN_FORMAT.id()).hasSize(3);
+    }
 
     @Test
     void theIdIsReadFromTheConfiguredField() {

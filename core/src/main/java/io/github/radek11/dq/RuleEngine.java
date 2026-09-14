@@ -41,17 +41,18 @@ public final class RuleEngine {
      * <ul>
      *   <li>a rule failing on a record, as described in {@link RuleLogic#compute} — a
      *       {@link RuleFailure};</li>
-     *   <li>a record that cannot be evaluated: a {@code null} element, no id, or an id or
-     *       country that is not text ({@link FieldTypeException}) — one {@link RecordFailure},
-     *       and no rule runs on that record.</li>
+     *   <li>a record that cannot be evaluated: a {@code null} element, no usable id (missing,
+     *       {@code null} or blank), an id or country that is not text
+     *       ({@link FieldTypeException}), or a record that throws when its id or country is
+     *       read — one {@link RecordFailure}, and no rule runs on that record.</li>
      * </ul>
      *
      * <p>What ends the run — propagates to the caller, no summary is returned:
      * <ul>
      *   <li>an exception thrown by the input iterator, for example unreadable input;</li>
      *   <li>an exception thrown by the sink — it is the host's fault, not the rule's;</li>
-     *   <li>an exception thrown by the catalog, or two rules with the same id
-     *       ({@link IllegalArgumentException}), both before any record is read;</li>
+     *   <li>an exception thrown by the catalog or by the rule filter, or two rules with the same
+     *       id ({@link IllegalArgumentException}), all before any record is read;</li>
      *   <li>a JVM {@link Error}.</li>
      * </ul>
      *
@@ -87,8 +88,10 @@ public final class RuleEngine {
         return output.toSummary();
     }
 
+    // No initial capacity: batchSize is an upper bound, and reserving it up front would fail for a
+    // large value even on a short input.
     private static List<DataRecord> nextBatch(Iterator<? extends DataRecord> records, int batchSize) {
-        List<DataRecord> batch = new ArrayList<>(batchSize);
+        List<DataRecord> batch = new ArrayList<>();
         while (batch.size() < batchSize && records.hasNext()) {
             batch.add(records.next());
         }

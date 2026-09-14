@@ -93,6 +93,45 @@ class RecordIdentifierTest {
                 cause -> assertThat(cause.fieldName()).isEqualTo("country"));
     }
 
+    @Test
+    void aRecordThatThrowsWhenItsIdIsReadIsRejectedWithoutAnId() {
+        IllegalStateException unreadable = new IllegalStateException("lazy field could not be loaded");
+
+        RecordFailure failure = rejected(identifier.identify(throwingOn("id", unreadable), 4));
+
+        assertThat(failure.recordId()).isEmpty();
+        assertThat(failure.recordIndex()).isEqualTo(4);
+        assertThat(failure.cause()).isSameAs(unreadable);
+    }
+
+    @Test
+    void aRecordThatThrowsWhenItsCountryIsReadIsRejectedWithTheId() {
+        IllegalStateException unreadable = new IllegalStateException("lazy field could not be loaded");
+
+        RecordFailure failure = rejected(identifier.identify(throwingOn("country", unreadable), 0));
+
+        assertThat(failure.recordId()).contains("r1");
+        assertThat(failure.cause()).isSameAs(unreadable);
+    }
+
+    /** A host record whose id is "r1" and which throws when the given field is read. */
+    private static DataRecord throwingOn(String field, RuntimeException exception) {
+        return new DataRecord() {
+            @Override
+            public boolean contains(String name) {
+                return true;
+            }
+
+            @Override
+            public Object get(String name) {
+                if (name.equals(field)) {
+                    throw exception;
+                }
+                return "r1";
+            }
+        };
+    }
+
     private static RecordFailure rejected(Identification identification) {
         assertThat(identification).isInstanceOf(Rejected.class);
         return ((Rejected) identification).failure();

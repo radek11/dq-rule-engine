@@ -4,8 +4,9 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * A record that could not be evaluated at all — no usable id, an id or country that is not
- * text, or a {@code null} input element. No rule ran on it.
+ * A record that could not be evaluated at all — no usable id (missing, {@code null} or blank),
+ * an id or country that is not text, a record that throws when its id or country is read, or a
+ * {@code null} input element. No rule ran on it.
  *
  * @param recordId id of the record, or empty when the record has no usable id
  * @param recordIndex zero-based position of the record in the run's input

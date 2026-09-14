@@ -31,9 +31,9 @@ class RunCountersTest {
 
         assertThat(summary.results()).isZero();
         assertThat(summary.failures()).isZero();
-        assertThat(summary.byDecision()).hasSize(Decision.values().length).containsOnlyKeys(Decision.values())
+        assertThat(summary.byDecision()).containsOnlyKeys(Decision.values())
                 .allSatisfy((decision, count) -> assertThat(count).isZero());
-        assertThat(summary.bySeverity()).hasSize(Severity.values().length)
+        assertThat(summary.bySeverity()).containsOnlyKeys(Severity.values())
                 .allSatisfy((severity, count) -> assertThat(count).isZero());
     }
 
@@ -53,9 +53,10 @@ class RunCountersTest {
     }
 
     @Test
-    void failuresOfBothKindsAreCountedApartFromResults() {
+    void failuresOfBothKindsAreCountedButDoNotChangeTheBreakdowns() {
         Exception cause = new MissingFieldException("vatId");
         counters.add(result(VALID, ERROR));
+        RunSummary beforeFailures = counters.toSummary();
         counters.add(new RuleFailure("vatFormat", "r1", 0, cause));
         counters.add(new RecordFailure(Optional.empty(), 1, cause));
 
@@ -63,7 +64,8 @@ class RunCountersTest {
 
         assertThat(summary.results()).isEqualTo(1);
         assertThat(summary.failures()).isEqualTo(2);
-        assertThat(summary.byDecision().values()).containsOnly(0L, 1L);
+        assertThat(summary.byDecision()).isEqualTo(beforeFailures.byDecision());
+        assertThat(summary.bySeverity()).isEqualTo(beforeFailures.bySeverity());
     }
 
     @Test
