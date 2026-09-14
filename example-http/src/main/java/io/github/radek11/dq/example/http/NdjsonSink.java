@@ -57,7 +57,8 @@ final class NdjsonSink implements ResultSink, AutoCloseable {
         endLine();
     }
 
-    // The cause's type and message only: the library keeps field values out of failures (D10).
+    // The cause's type and message only. The library's own exceptions name fields, not values; the
+    // message of an exception thrown by rule logic is up to the rule's author (D10).
     @Override
     public void onFailure(Failure failure) {
         json.writeStartObject();

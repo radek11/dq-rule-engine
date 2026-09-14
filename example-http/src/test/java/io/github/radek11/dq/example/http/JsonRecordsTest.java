@@ -51,6 +51,14 @@ class JsonRecordsTest {
     }
 
     @Test
+    void aRepeatedKeyKeepsItsLastValue() {
+        DataRecord record = records("""
+                [{"id": "first", "id": "last"}]""").next();
+
+        assertThat(record.get("id")).isEqualTo("last");
+    }
+
+    @Test
     void anElementThatIsNotAnObjectBecomesARecordThatFailsWhenReadAndReadingContinues() {
         List<DataRecord> records = readAll(records("""
                 [1, "r1", null, [{"id": "inside"}], {"id": "r2"}]"""));

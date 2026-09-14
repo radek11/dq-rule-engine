@@ -75,6 +75,21 @@ class BatchValidationTest {
     }
 
     @Test
+    void aRecordOverTheParserNestingLimitEndsTheResponseWithAnErrorLineInsteadOfASummary() {
+        List<String> lines = validate("[" + R1 + ", {\"id\": \"r2\", \"deep\": " + nested(600) + "}]");
+
+        assertThat(lines).hasSize(4);
+        assertThat(lines.get(3)).startsWith("{\"type\":\"error\",\"message\":\"JSON exceeds a parser limit");
+    }
+
+    @Test
+    void aBodyThatIsANumberOverTheParserLengthLimitIsRejectedWhenOpened() {
+        assertThatThrownBy(() -> validation.open(body("1".repeat(1001))))
+                .isInstanceOf(BatchValidation.InvalidBodyException.class)
+                .hasMessageStartingWith("JSON exceeds a parser limit");
+    }
+
+    @Test
     void aBodyThatIsNotAnArrayIsRejectedBeforeAnythingIsWrittenAndTheMessageHidesTheContent() {
         assertThatThrownBy(() -> validation.open(body("{\"id\": \"r1\"}")))
                 .isInstanceOf(BatchValidation.InvalidBodyException.class)
@@ -89,6 +104,11 @@ class BatchValidationTest {
         ByteArrayOutputStream client = new ByteArrayOutputStream();
         validation.run(validation.open(body(json)), client);
         return client.toString(StandardCharsets.UTF_8).lines().toList();
+    }
+
+    // Jackson's default StreamReadConstraints allow a nesting depth of 500.
+    private static String nested(int depth) {
+        return "[".repeat(depth) + "]".repeat(depth);
     }
 
     private static ByteArrayInputStream body(String json) {

@@ -6,6 +6,7 @@ import io.github.radek11.dq.output.RunSummary;
 import tools.jackson.core.JsonParser;
 import tools.jackson.core.ObjectReadContext;
 import tools.jackson.core.TokenStreamLocation;
+import tools.jackson.core.exc.StreamConstraintsException;
 import tools.jackson.core.exc.StreamReadException;
 import tools.jackson.core.json.JsonFactory;
 
@@ -40,7 +41,7 @@ final class BatchValidation {
         JsonParser parser = JSON.createParser(ObjectReadContext.empty(), body);
         try {
             return new JsonRecords(parser);
-        } catch (IllegalArgumentException | StreamReadException e) {
+        } catch (IllegalArgumentException | StreamReadException | StreamConstraintsException e) {
             parser.close();
             throw new InvalidBodyException(describe(e), e);
         }
@@ -48,17 +49,18 @@ final class BatchValidation {
 
     /**
      * Runs the engine over the records and writes NDJSON lines to the response, ending with a
-     * summary line, or with an error line when the input breaks mid-run (D23, D26). Closes the
-     * response.
+     * summary line, or with an error line when the input breaks mid-run — malformed JSON, content
+     * after the array, or a parser limit such as nesting depth (D23, D26). Closes the response.
      *
-     * @throws RuntimeException when the response cannot be written, for example the client left
+     * @throws RuntimeException when the request or the response cannot be read or written, for
+     *                          example the client left; no error line is attempted then
      */
     void run(JsonRecords records, OutputStream response) {
         try (NdjsonSink sink = new NdjsonSink(response)) {
             RunSummary summary;
             try {
                 summary = engine.run(records, options, sink);
-            } catch (IllegalArgumentException | StreamReadException e) {
+            } catch (IllegalArgumentException | StreamReadException | StreamConstraintsException e) {
                 sink.error(describe(e));
                 return;
             }
@@ -70,11 +72,16 @@ final class BatchValidation {
     // location is kept. JsonRecords' messages name the kind of JSON value, never the value.
     private static String describe(RuntimeException e) {
         if (e instanceof StreamReadException read) {
-            TokenStreamLocation at = read.getLocation();
-            return at == null ? "malformed JSON"
-                    : "malformed JSON at line " + at.getLineNr() + ", column " + at.getColumnNr();
+            return "malformed JSON" + at(read.getLocation());
+        }
+        if (e instanceof StreamConstraintsException limit) {
+            return "JSON exceeds a parser limit" + at(limit.getLocation());
         }
         return e.getMessage();
+    }
+
+    private static String at(TokenStreamLocation location) {
+        return location == null ? "" : " at line " + location.getLineNr() + ", column " + location.getColumnNr();
     }
 
     /** The request body cannot start a run; the message is safe to return to the client. */
