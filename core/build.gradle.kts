@@ -38,7 +38,7 @@ tasks.test {
 
 // K7: one run of 1,000,000 records under a fixed heap. Manual, not part of build — it takes
 // longer than the unit tests and its limit is a measured number, see DESIGN.md §2:
-// the smallest passing heap was 8m, the limit is twice that. -PmemoryTest.heap=… overrides it.
+// the smallest passing heap tried was 8m, the limit is twice that. -PmemoryTest.heap=… overrides it.
 val memoryTest by tasks.registering(Test::class) {
     description = "Runs 1,000,000 records under a fixed heap limit."
     group = "verification"

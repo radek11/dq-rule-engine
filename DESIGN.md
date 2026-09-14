@@ -97,7 +97,7 @@ goes on. A fault of the host or the platform ends the run.
 | Isolated — a `Failure` in the sink | Ends the run — reaches the caller |
 |---|---|
 | a rule's logic throws (`RuleFailure`) | the input iterator throws |
-| a record has no usable id, a non-text id or country, or throws when read (`RecordFailure`) | the sink throws |
+| a record is `null`, has no usable id, has a non-text id or country, or throws when read (`RecordFailure`) | the sink throws |
 | | the catalog or the filter throws, or two rules share an id — before any record is read |
 | | a JVM `Error` |
 
@@ -132,18 +132,19 @@ volume" is about the number of records; one huge record still takes what it weig
 ### Memory: measured
 
 `./gradlew :core:memoryTest` runs 1,000,000 generated records through the three fixture rules
-and one rule that fails on a missing VAT id (2,750,000 results, 500,000 failures), with the
-default batch of 1,000 and a sink that only counts. The input is generated as it is read.
+and one rule that fails on a missing VAT id, with the default batch of 1,000 and a sink that
+only counts. Every fourth record has no id, so the run gives 2,750,000 results, 250,000 rule
+failures and 250,000 record failures. The input is generated as it is read.
 
 | Heap limit | Outcome |
 |---|---|
 | 64 MB | passes, 9 s |
-| 16 MB | passes, 10–22 s over four runs — the task's limit |
+| 16 MB | passes, 10–22 s over four runs — the limit set on `memoryTest` |
 | 12 MB | passes, 16 s |
-| 8 MB | passes, 101 s: most of the time goes to garbage collection |
-| 6 MB | `OutOfMemoryError` |
+| 8 MB | passes, 101–104 s: GC pauses take 94 of 108 s, 6 MB stay in use after a full collection |
+| 6 MB, 4 MB, 3 MB | `OutOfMemoryError` |
 
-The limit is twice the smallest passing heap. These numbers include JUnit and the Gradle test
+The limit is twice the smallest passing heap among those tried (7 MB was not tried). These numbers include JUnit and the Gradle test
 worker, so they are an upper bound for the engine itself. The test proves something only if a
 wrong engine fails it: an engine that keeps every result fails with `OutOfMemoryError` at 16 MB
 and at 64 MB. Time is reported, not promised — the task sets no throughput target and gives no
