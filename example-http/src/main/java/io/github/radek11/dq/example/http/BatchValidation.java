@@ -68,20 +68,19 @@ final class BatchValidation {
         }
     }
 
-    // Jackson's own message may quote the offending input, which is company data (D10): only the
-    // location is kept. JsonRecords' messages name the kind of JSON value, never the value.
+    // A syntax error's message may quote the offending input, which is company data (D10): only
+    // its location is kept. A limit's message states lengths and the limit, not input, and it
+    // carries no location. JsonRecords' messages name the kind of JSON value, never the value.
     private static String describe(RuntimeException e) {
         if (e instanceof StreamReadException read) {
-            return "malformed JSON" + at(read.getLocation());
+            TokenStreamLocation at = read.getLocation();
+            return at == null ? "malformed JSON"
+                    : "malformed JSON at line " + at.getLineNr() + ", column " + at.getColumnNr();
         }
         if (e instanceof StreamConstraintsException limit) {
-            return "JSON exceeds a parser limit" + at(limit.getLocation());
+            return "JSON exceeds a parser limit: " + limit.getOriginalMessage();
         }
         return e.getMessage();
-    }
-
-    private static String at(TokenStreamLocation location) {
-        return location == null ? "" : " at line " + location.getLineNr() + ", column " + location.getColumnNr();
     }
 
     /** The request body cannot start a run; the message is safe to return to the client. */

@@ -79,14 +79,14 @@ class BatchValidationTest {
         List<String> lines = validate("[" + R1 + ", {\"id\": \"r2\", \"deep\": " + nested(600) + "}]");
 
         assertThat(lines).hasSize(4);
-        assertThat(lines.get(3)).startsWith("{\"type\":\"error\",\"message\":\"JSON exceeds a parser limit");
+        assertThat(lines.get(3)).startsWith("{\"type\":\"error\",\"message\":\"JSON exceeds a parser limit: Document nesting depth (501) exceeds the maximum allowed (500");
     }
 
     @Test
     void aBodyThatIsANumberOverTheParserLengthLimitIsRejectedWhenOpened() {
         assertThatThrownBy(() -> validation.open(body("1".repeat(1001))))
                 .isInstanceOf(BatchValidation.InvalidBodyException.class)
-                .hasMessageStartingWith("JSON exceeds a parser limit");
+                .hasMessageStartingWith("JSON exceeds a parser limit: Number value length (1001) exceeds the maximum allowed (1000");
     }
 
     @Test
