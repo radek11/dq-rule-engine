@@ -63,10 +63,6 @@ Decisions, each with the alternative it beat:
   terminal operation and the stream must be closed. With push the engine keeps nothing beyond
   the current batch; what the sink keeps is the host's choice. A slow sink slows the run,
   because the engine calls it synchronously.
-- **Clear line between isolated and fatal.** A failing rule or an unusable record becomes a
-  `Failure` and the run goes on. Unreadable input, a failing sink, a broken catalog and JVM
-  errors end the run — they are faults of the host or the platform, and reporting them as
-  rule failures would hide them.
 - **Records are field maps, not POJOs.** `DataRecord.get("vatId")`. *Rejected:* a
   `BusinessPartner` class — master data differs per country and per client, and a fixed
   class makes the library single-use. The core has no JSON dependency; parsing is the host's
@@ -93,7 +89,77 @@ Decisions, each with the alternative it beat:
 
 ## 2. Fault isolation and bounded memory
 
-*To be written with the implementation (E2–E3).*
+### Isolation: what becomes a failure, what ends the run
+
+A failure belongs to one record or one pair of record and rule; it is reported and the run
+goes on. A fault of the host or the platform ends the run.
+
+| Isolated — a `Failure` in the sink | Ends the run — reaches the caller |
+|---|---|
+| a rule's logic throws (`RuleFailure`) | the input iterator throws |
+| a record has no usable id, a non-text id or country, or throws when read (`RecordFailure`) | the sink throws |
+| | the catalog or the filter throws, or two rules share an id — before any record is read |
+| | a JVM `Error` |
+
+In the rule loop only `rule.evaluate` sits inside the `try`, and it catches `Exception`. The
+sink call is outside it.
+
+*Rejected:* the sink call inside the `try`. A sink that fails to take a result would have its
+exception reported as a `RuleFailure`: the rule is blamed for the host's fault, and the run
+completes with that result lost. *Rejected:* `catch (Throwable)`. After an `OutOfMemoryError` or
+`StackOverflowError` the JVM's state is unknown; reporting it as one rule's failure and going
+on would hide it. Both alternatives were tried as mutations and each fails a named test.
+
+A consequence to know: the engine reads a whole batch before evaluating it, so if the input
+fails in the middle of a batch, the records already read in that batch are not evaluated.
+
+### Memory: what the engine holds
+
+During a run the engine holds:
+
+- the selected rules — fixed for the run, as large as the catalog;
+- the current batch — at most `batchSize` records;
+- the counters for the summary — fixed-size arrays;
+- one `Result` or `Failure` at a time, until the sink returns.
+
+It does not hold results, failures or record ids. So it does not detect duplicate record ids:
+that would need a set growing with the input.
+
+Memory therefore grows with `batchSize` and the size of a record, not with the number of
+records. What the sink keeps is the host's choice. *Assumption:* "bounded regardless of total
+volume" is about the number of records; one huge record still takes what it weighs.
+
+### Memory: measured
+
+`./gradlew :core:memoryTest` runs 1,000,000 generated records through the three fixture rules
+and one rule that fails on a missing VAT id (2,750,000 results, 500,000 failures), with the
+default batch of 1,000 and a sink that only counts. The input is generated as it is read.
+
+| Heap limit | Outcome |
+|---|---|
+| 64 MB | passes, 9 s |
+| 16 MB | passes, 14–22 s — the task's limit |
+| 12 MB | passes, 16 s |
+| 8 MB | passes, 101 s: most of the time goes to garbage collection |
+| 6 MB | `OutOfMemoryError` |
+
+The limit is twice the smallest passing heap. These numbers include JUnit and the Gradle test
+worker, so they are an upper bound for the engine itself. The test proves something only if a
+wrong engine fails it: an engine that keeps every result fails with `OutOfMemoryError` at 16 MB
+and at 64 MB. Time is reported, not promised — the task sets no throughput target and gives no
+hardware.
+
+Only one volume is measured. That memory does not grow with volume rests on the list above;
+the test confirms that 1,000,000 records fit where keeping their results does not.
+
+### Threads
+
+One engine can serve concurrent runs. Its only field is the catalog, and all run state —
+selected rules, batch, counters — is local to the call to `run`. This holds under three
+conditions the host provides: the catalog can be read from several threads, rule logic keeps
+no state, and each run gets its own sink (or a thread-safe one). *Rejected:* a test running
+many threads on one engine. A race it misses still passes, so a green result would claim more
+than it shows.
 
 ## 3. Seams for host-supplied inputs
 
