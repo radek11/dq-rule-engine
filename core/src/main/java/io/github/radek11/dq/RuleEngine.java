@@ -69,24 +69,22 @@ public final class RuleEngine {
         Objects.requireNonNull(options, "options");
         Objects.requireNonNull(sink, "sink");
 
-        RuleSelection selection = RuleSelection.of(catalog, options.ruleFilter());
+        List<Rule> rules = RuleSelection.of(catalog, options.ruleFilter()).rules();
         RecordIdentifier identifier = new RecordIdentifier(options.idField(), options.countryField());
-        RunCounters counters = new RunCounters();
-        long index = 0;
+        CountingSink output = new CountingSink(sink);
+        long recordIndex = 0;
         while (records.hasNext()) {
             for (DataRecord record : nextBatch(records, options.batchSize())) {
-                switch (identifier.identify(record, index)) {
-                    case Identified identified -> evaluate(identified, index, selection, sink, counters);
-                    case Rejected rejected -> {
-                        sink.onFailure(rejected.failure());
-                        counters.add(rejected.failure());
-                    }
+                switch (identifier.identify(record, recordIndex)) {
+                    case Identified identified -> evaluateRules(rules, identified, recordIndex, output);
+                    case Rejected rejected -> output.onFailure(rejected.failure());
                 }
-                index++;
+                recordIndex++;
             }
-            sink.onBatchEnd(index);
+            // The index of the next record equals the number of records consumed so far.
+            output.onBatchEnd(recordIndex);
         }
-        return counters.toSummary();
+        return output.toSummary();
     }
 
     private static List<DataRecord> nextBatch(Iterator<? extends DataRecord> records, int batchSize) {
@@ -99,24 +97,20 @@ public final class RuleEngine {
 
     // Only rule.evaluate is inside the try: a sink that throws must end the run, not become a
     // RuleFailure, and an Error is never isolated.
-    private static void evaluate(
-            Identified record, long index, RuleSelection selection, ResultSink sink, RunCounters counters) {
-        String country = record.country().orElse(null);
-        for (Rule rule : selection.rules()) {
+    private static void evaluateRules(List<Rule> rules, Identified identified, long recordIndex, ResultSink output) {
+        String country = identified.country().orElse(null);
+        for (Rule rule : rules) {
             if (!rule.appliesTo(country)) {
                 continue;
             }
             Result result;
             try {
-                result = rule.evaluate(record.record(), record.id());
+                result = rule.evaluate(identified.record(), identified.id());
             } catch (Exception e) {
-                RuleFailure failure = new RuleFailure(rule.id(), record.id(), index, e);
-                sink.onFailure(failure);
-                counters.add(failure);
+                output.onFailure(new RuleFailure(rule.id(), identified.id(), recordIndex, e));
                 continue;
             }
-            sink.onResult(result);
-            counters.add(result);
+            output.onResult(result);
         }
     }
 }

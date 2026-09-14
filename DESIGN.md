@@ -15,7 +15,7 @@ Packages follow the flow of a run, dependencies pointing one way (`input` and `o
 |---|---|---|---|
 | `dq.input` | what comes in | `DataRecord` — record by field name; `FieldReader` — what logic reads through; field exceptions | — |
 | `dq.rule` | what is checked | `Rule` — evaluates itself on a record; `RuleLogic`, `DecisionMapping`, `Scope`, `RuleStatus`, `RuleCatalog`, `RuleFilters` | `RecordingFieldReader` — records reads as provenance |
-| `dq` | how a run proceeds | `RuleEngine` — coordinates a run; `RunOptions` | `RuleSelection` — rules of a run; `RunCounters` — summary counts |
+| `dq` | how a run proceeds | `RuleEngine` — coordinates a run; `RunOptions` | `RuleSelection` — rules of a run; `RecordIdentifier` — id and country, or a rejection; `CountingSink` — host's sink with counting attached; `RunCounters` — summary counts |
 | `dq.output` | what comes out | `Result`, `Failure` (sealed: `RuleFailure`, `RecordFailure`), `RunSummary`, `ResultSink`, `Decision`, `Severity`, `FieldRead` | — |
 
 *Rejected:* one package per function (`selection`, `evaluation`, `counting`). Package-private
@@ -28,16 +28,22 @@ Who does what in a run:
 ```
 RuleEngine.run
   RuleSelection.of(catalog, filter)      snapshot, duplicate ids, filter, RELEASED only
-  per batch, per record:                 id and country, or a RecordFailure
-    per selected rule:
-      rule.appliesTo(country)            scope decides
-      rule.evaluate(record, id)          logic via recording reader → value → mapping → Result
-      failure → RuleFailure              isolation stays in the engine
-      sink.onResult / onFailure          outside the try: a failing sink ends the run
-      RunCounters.add
-    sink.onBatchEnd
-  RunCounters.toSummary()
+  new CountingSink(sink)                 everything the host accepts is counted
+  per batch of batchSize records:
+    per record:
+      RecordIdentifier.identify          Identified(record, id, country) or Rejected(RecordFailure)
+        Rejected → onFailure             no rule runs on the record
+        Identified → per selected rule:
+          rule.appliesTo(country)        scope decides
+          rule.evaluate(record, id)      the only call inside try: logic → value → mapping → Result
+          exception → RuleFailure        isolation stays in the engine; an Error is not caught
+          onResult / onFailure           outside the try: a failing sink ends the run
+    onBatchEnd(recordsSoFar)
+  CountingSink.toSummary()
 ```
+
+*Rejected:* counting next to each sink call in the engine — three places to keep in step, and
+a missed one would make the summary disagree with the sink.
 
 Decisions, each with the alternative it beat:
 
