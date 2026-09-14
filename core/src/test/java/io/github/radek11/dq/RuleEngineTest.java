@@ -133,6 +133,7 @@ class RuleEngineTest {
 
     // W-28 — results are emitted as they are produced, not collected per batch
 
+    /** The logic writes to a log only to show the order; real rule logic keeps no state. */
     @Test
     void eachResultReachesTheSinkBeforeTheNextRuleIsEvaluated() {
         List<String> log = new ArrayList<>();

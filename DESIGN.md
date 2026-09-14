@@ -138,7 +138,7 @@ default batch of 1,000 and a sink that only counts. The input is generated as it
 | Heap limit | Outcome |
 |---|---|
 | 64 MB | passes, 9 s |
-| 16 MB | passes, 14–22 s — the task's limit |
+| 16 MB | passes, 11–22 s over three runs — the task's limit |
 | 12 MB | passes, 16 s |
 | 8 MB | passes, 101 s: most of the time goes to garbage collection |
 | 6 MB | `OutOfMemoryError` |
