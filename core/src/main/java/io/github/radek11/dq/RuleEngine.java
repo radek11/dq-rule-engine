@@ -1,16 +1,22 @@
 package io.github.radek11.dq;
 
+import io.github.radek11.dq.RecordIdentifier.Identified;
+import io.github.radek11.dq.RecordIdentifier.Rejected;
 import io.github.radek11.dq.input.DataRecord;
 import io.github.radek11.dq.input.FieldTypeException;
 import io.github.radek11.dq.output.Failure;
 import io.github.radek11.dq.output.RecordFailure;
+import io.github.radek11.dq.output.Result;
 import io.github.radek11.dq.output.ResultSink;
 import io.github.radek11.dq.output.RuleFailure;
 import io.github.radek11.dq.output.RunSummary;
+import io.github.radek11.dq.rule.Rule;
 import io.github.radek11.dq.rule.RuleCatalog;
 import io.github.radek11.dq.rule.RuleLogic;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -59,6 +65,58 @@ public final class RuleEngine {
      * @return counts for the run
      */
     public RunSummary run(Iterator<? extends DataRecord> records, RunOptions options, ResultSink sink) {
-        throw new UnsupportedOperationException("E2");
+        Objects.requireNonNull(records, "records");
+        Objects.requireNonNull(options, "options");
+        Objects.requireNonNull(sink, "sink");
+
+        RuleSelection selection = RuleSelection.of(catalog, options.ruleFilter());
+        RecordIdentifier identifier = new RecordIdentifier(options.idField(), options.countryField());
+        RunCounters counters = new RunCounters();
+        long index = 0;
+        while (records.hasNext()) {
+            for (DataRecord record : nextBatch(records, options.batchSize())) {
+                switch (identifier.identify(record, index)) {
+                    case Identified identified -> evaluate(identified, index, selection, sink, counters);
+                    case Rejected rejected -> {
+                        sink.onFailure(rejected.failure());
+                        counters.add(rejected.failure());
+                    }
+                }
+                index++;
+            }
+            sink.onBatchEnd(index);
+        }
+        return counters.toSummary();
+    }
+
+    private static List<DataRecord> nextBatch(Iterator<? extends DataRecord> records, int batchSize) {
+        List<DataRecord> batch = new ArrayList<>(batchSize);
+        while (batch.size() < batchSize && records.hasNext()) {
+            batch.add(records.next());
+        }
+        return batch;
+    }
+
+    // Only rule.evaluate is inside the try: a sink that throws must end the run, not become a
+    // RuleFailure, and an Error is never isolated.
+    private static void evaluate(
+            Identified record, long index, RuleSelection selection, ResultSink sink, RunCounters counters) {
+        String country = record.country().orElse(null);
+        for (Rule rule : selection.rules()) {
+            if (!rule.appliesTo(country)) {
+                continue;
+            }
+            Result result;
+            try {
+                result = rule.evaluate(record.record(), record.id());
+            } catch (Exception e) {
+                RuleFailure failure = new RuleFailure(rule.id(), record.id(), index, e);
+                sink.onFailure(failure);
+                counters.add(failure);
+                continue;
+            }
+            sink.onResult(result);
+            counters.add(result);
+        }
     }
 }

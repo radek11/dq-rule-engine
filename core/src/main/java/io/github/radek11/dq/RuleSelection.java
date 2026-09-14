@@ -2,8 +2,11 @@ package io.github.radek11.dq;
 
 import io.github.radek11.dq.rule.Rule;
 import io.github.radek11.dq.rule.RuleCatalog;
+import io.github.radek11.dq.rule.RuleStatus;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 
 /**
@@ -25,11 +28,27 @@ final class RuleSelection {
      * @throws IllegalArgumentException when two catalog rules share an id
      */
     static RuleSelection of(RuleCatalog catalog, Predicate<Rule> filter) {
-        throw new UnsupportedOperationException("E2");
+        List<Rule> snapshot = List.copyOf(catalog.rules());
+        requireUniqueIds(snapshot);
+        return new RuleSelection(snapshot.stream()
+                .filter(filter)
+                .filter(rule -> rule.status() == RuleStatus.RELEASED)
+                .toList());
     }
 
     /** @return selected rules, in catalog order */
     List<Rule> rules() {
         return rules;
+    }
+
+    // Checked over the whole catalog, not the selection: a duplicate is a broken catalog
+    // whichever of the two rules a filter would pick.
+    private static void requireUniqueIds(List<Rule> rules) {
+        Set<String> ids = new HashSet<>();
+        for (Rule rule : rules) {
+            if (!ids.add(rule.id())) {
+                throw new IllegalArgumentException("Duplicate rule id in catalog: " + rule.id());
+            }
+        }
     }
 }

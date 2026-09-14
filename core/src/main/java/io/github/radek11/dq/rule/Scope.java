@@ -45,6 +45,9 @@ public final class Scope {
      * @return {@code true} when the rule should run on the record
      */
     boolean appliesTo(String recordCountry) {
+        if (country == null) {
+            return true;
+        }
         throw new UnsupportedOperationException("E4");
     }
 

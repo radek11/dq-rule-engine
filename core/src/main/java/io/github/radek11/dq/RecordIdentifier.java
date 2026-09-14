@@ -1,6 +1,8 @@
 package io.github.radek11.dq;
 
 import io.github.radek11.dq.input.DataRecord;
+import io.github.radek11.dq.input.FieldTypeException;
+import io.github.radek11.dq.input.MissingFieldException;
 import io.github.radek11.dq.output.RecordFailure;
 
 import java.util.Optional;
@@ -29,7 +31,46 @@ final class RecordIdentifier {
      * @return the record with its id and country, or the reason it was rejected
      */
     Identification identify(DataRecord record, long index) {
-        throw new UnsupportedOperationException("E2");
+        if (record == null) {
+            return rejected(Optional.empty(), index, new NullPointerException("Input element is null"));
+        }
+        Optional<String> id;
+        try {
+            id = text(record, idField);
+        } catch (FieldTypeException e) {
+            return rejected(Optional.empty(), index, e);
+        }
+        if (id.isEmpty()) {
+            return rejected(Optional.empty(), index, new MissingFieldException(idField));
+        }
+        if (id.get().isBlank()) {
+            return rejected(Optional.empty(), index,
+                    new IllegalArgumentException("Record id in field " + idField + " is blank"));
+        }
+        try {
+            return new Identified(record, id.get(), text(record, countryField));
+        } catch (FieldTypeException e) {
+            return rejected(id, index, e);
+        }
+    }
+
+    /** @return the field's text, empty when it is missing or {@code null} */
+    private static Optional<String> text(DataRecord record, String field) {
+        if (!record.contains(field)) {
+            return Optional.empty();
+        }
+        Object value = record.get(field);
+        if (value == null) {
+            return Optional.empty();
+        }
+        if (value instanceof String text) {
+            return Optional.of(text);
+        }
+        throw new FieldTypeException(field, value.getClass());
+    }
+
+    private static Rejected rejected(Optional<String> recordId, long index, Exception cause) {
+        return new Rejected(new RecordFailure(recordId, index, cause));
     }
 
     /** What identification found; the two cases are told apart by type. */

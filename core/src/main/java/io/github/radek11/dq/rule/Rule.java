@@ -79,7 +79,7 @@ public final class Rule {
      * @return whether this rule applies to a record of that country, see {@link Scope}
      */
     public boolean appliesTo(String recordCountry) {
-        throw new UnsupportedOperationException("E4");
+        return scope.appliesTo(recordCountry);
     }
 
     /** @return stable identifier */
